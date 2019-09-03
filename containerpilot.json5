@@ -1,0 +1,40 @@
+{
+  consul: "localhost:8500",
+  logging: {
+    level: "DEBUG",
+    format: "json",
+    output: "stdout"
+  },
+  jobs: [
+    {
+      name: "app",
+      exec: "/usr/local/bin/echo.py",
+      restarts: "unlimited",
+      when: {
+        source: "setup",
+        once: "exitSuccess",
+        timeout: "60s"
+      },
+      tags: [
+        "dev",
+      ],
+    },
+    {
+      name: "setup",
+      exec: "/usr/local/bin/prestart.py",
+      restarts: "never",
+      when: {
+        once: "startup"
+      }
+    },
+    {
+      name: "preStop",
+      when: {
+        source: "app",
+        once: "stopping"
+      },
+      exec: "/usr/local/bin/prestop.py",
+      restarts: "never",
+    }
+  ]
+}
