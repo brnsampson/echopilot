@@ -22,10 +22,7 @@
     {
       name: "setup",
       exec: "/usr/local/bin/prestart.py",
-      restarts: "never",
-      when: {
-        once: "startup"
-      }
+      restarts: "never"
     },
     {
       name: "preStop",
