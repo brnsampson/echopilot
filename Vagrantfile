@@ -82,5 +82,11 @@ Vagrant.configure("2") do |config|
     git clone https://github.com/brnsampson/echopilot.git
     docker build -t echopilot ./echopilot/
     cp echopilot/systemd/echopilot.service /etc/systemd/system/
+    cp echopilot/systemd/telegraf.service /etc/systemd/system/
+    cp echopilot/systemd/fluent-bit.service /etc/systemd/system/
+    mkdir -p /etc/telegraf/
+    cp echopilot/etc/telegraf.conf /etc/telegraf/
+    mkdir -p /etc/fluent-bit
+    cp echopilot/etc/fluent-bit.conf /etc/fluent-bit/
   SHELL
 end
