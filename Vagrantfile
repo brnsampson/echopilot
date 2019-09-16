@@ -90,5 +90,6 @@ Vagrant.configure("2") do |config|
     mkdir -p /etc/fluent-bit
     cp echopilot/etc/fluent-bit.conf /etc/fluent-bit/
     git clone https://github.com/fatih/vim-go.git ~/.vim/pack/plugins/start/vim-go
+    go get -u go.uber.org/zap
   SHELL
 end

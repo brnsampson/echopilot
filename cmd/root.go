@@ -19,9 +19,8 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"os"
-	"sys"
 
-	"github.com/brnsampson/gopilot/internal/app/echoserver"
+	"github.com/brnsampson/echopilot/internal/app/echoserver"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
@@ -47,14 +46,15 @@ to quickly create a Cobra application.`,
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	logger, err := zap.NewDevelopment().Sugar()
+	logger, err := zap.NewDevelopment()
 	if err != nil {
 		fmt.Println("Failed to initialize logger!")
-		exit(1)
+		os.Exit(1)
 	}
-	defer logger.Sync()
-	exitCode := echoserver.RunEchoServer(logger)
-	sys.exit(exitCode)
+	sugar := logger.Sugar()
+	defer sugar.Sync()
+	exitCode := echoserver.RunEchoServer(sugar)
+	os.Exit(exitCode)
 }
 
 func init() {

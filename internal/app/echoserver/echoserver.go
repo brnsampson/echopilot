@@ -1,9 +1,13 @@
 package echoserver
 
 import (
+	"context"
+	"fmt"
 	"net/http"
+	"os"
 	"os/signal"
 	"sync"
+	"syscall"
 	"time"
 )
 
@@ -22,9 +26,9 @@ func Echo(s string) string {
 }
 
 func EchoHandler(w http.ResponseWriter, r *http.Request) {
-	body := r.FormValue("body")
-	resp := Echo(body)
-	io.WriteString(w, resp)
+	data := r.FormValue("data")
+	resp := Echo(data)
+	fmt.Fprintf(w, resp)
 }
 
 func MakeHandler(fn func(http.ResponseWriter, *http.Request), logger Logger) http.HandlerFunc {
@@ -32,20 +36,21 @@ func MakeHandler(fn func(http.ResponseWriter, *http.Request), logger Logger) htt
 		begin := time.Now()
 		fn(w, r)
 		logger.Debugf("Served request for %s in %d", r.URL.Path, time.Since(begin)/time.Second)
+		logger.Debugf("Body content: %s", r.FormValue("data"))
 	}
 }
 
 func ServeWithReload(logger Logger, waitgroup *sync.WaitGroup, err chan<- error, done <-chan struct{}, hups <-chan os.Signal) {
-	m := http.NewServerMux()
 
 	for {
-		m.HandleFunc("/", MakeHandler(EchoHandler))
+		m := http.NewServeMux()
+		m.HandleFunc("/", MakeHandler(EchoHandler, logger))
 		addr := "127.0.0.1:9090"
 		s := &http.Server{Addr: addr, Handler: m}
 
-		go func(<-chan error) {
+		go func(chan<- error) {
 			logger.Infof("Listending on %s", addr)
-			if e := s.ListenAndServer(); e != nil {
+			if e := s.ListenAndServe(); e != nil {
 				err <- e
 			}
 			return
@@ -66,10 +71,10 @@ func ServeWithReload(logger Logger, waitgroup *sync.WaitGroup, err chan<- error,
 			ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 			s.Shutdown(ctx)
 			logger.Debugf("Server halted in %s ms", time.Since(begin)/time.Millisecond)
-			break
+			waitgroup.Done()
+			return
 		}
 	}
-	waitgroup.Done()
 }
 
 func RunEchoServer(logger Logger) int {
@@ -86,9 +91,7 @@ func RunEchoServer(logger Logger) int {
 	var waitgroup sync.WaitGroup
 
 	done := make(chan struct{}, 1)
-	err := make(chan struct{}, 1)
-	defer close(done)
-	defer close(err)
+	err := make(chan error, 1)
 
 	waitgroup.Add(1)
 
@@ -104,6 +107,7 @@ func RunEchoServer(logger Logger) int {
 		logger.Errorf("Encoutered error %s. Exiting...", err)
 		close(done)
 	}
+	<-err
 	waitgroup.Wait()
 	logger.Info("All waits done. Execution complete.")
 	return exitCode
