@@ -2,6 +2,7 @@ package echoserver_test
 
 import (
 	"fmt"
+	. "github.com/brnsampson/echopilot/pkg/echoserver"
 	"path/filepath"
 	"reflect"
 	"runtime"
@@ -36,7 +37,7 @@ func equals(tb testing.TB, exp, act interface{}) {
 }
 
 func TestEcho(t *testing.T) {
-	testString = "this is a test."
-	result = Echo(testString)
+	testString := "this is a test."
+	result := Echo(testString)
 	equals(t, testString, result)
 }

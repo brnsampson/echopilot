@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/brnsampson/echopilot/internal/app/echoserver"
+	"github.com/brnsampson/echopilot/pkg/echoserver"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
