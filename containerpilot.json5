@@ -8,7 +8,7 @@
   jobs: [
     {
       name: "setup",
-      exec: "/usr/local/bin/prestart.py",
+      exec: "/usr/local/bin/echopilot systemd notify -s ready",
       restarts: "never"
     },
     {
@@ -30,7 +30,7 @@
         source: "app",
         once: "stopping"
       },
-      exec: "/usr/local/bin/prestop.py",
+      exec: "/usr/local/bin/echopilot systemd notify -s stopping",
       restarts: "never",
     }
   ]

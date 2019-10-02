@@ -77,9 +77,8 @@ Vagrant.configure("2") do |config|
     wget https://dl.google.com/go/go1.13.linux-amd64.tar.gz
     tar -C /usr/local -xzf go1.13.linux-amd64.tar.gz
     echo 'export PATH=$PATH:/usr/local/go/bin' >> /home/vagrant/.bashrc
-    go get -u go.uber.org/zap
     go get github.com/coreos/sdnotify-proxy && sudo cp ~/go/bin/sdnotify-proxy /usr/local/bin/
-    go get github.com/brnsampson/echopilot.git
+    go get -u github.com/brnsampson/echopilot.git
     PATH=$PATH:/usr/local/go/bin:/home/vagrant/go/bin
     ln -s /home/vagrant/go/src/github.com/brnsampson/echopilot /home/vagrant/echopilot
     docker build -t echopilot /home/vagrant/go/src/github.com/brnsampson/echopilot/
@@ -91,5 +90,7 @@ Vagrant.configure("2") do |config|
     mkdir -p /etc/fluent-bit
     cp echopilot/etc/fluent-bit.conf /etc/fluent-bit/
     git clone https://github.com/fatih/vim-go.git ~/.vim/pack/plugins/start/vim-go
+    echo 'PATH=$PATH:/home/vagrant/go/bin' >> /vagrant/home/.bashrc
+    echo 'EXPORT GOPATH=/home/vagrant/go' >> /vagrant/home/.bashrc
   SHELL
 end

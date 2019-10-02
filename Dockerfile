@@ -7,9 +7,6 @@ COPY . .
 RUN go get -d -v ./...
 RUN go install -v ./...
 
-
-FROM python:3
-
 ENV CONTAINERPILOT_VERSION 3.8.0
 
 RUN curl -Lso /tmp/containerpilot.sha1.txt \
@@ -22,18 +19,15 @@ RUN curl -Lso /tmp/containerpilot.sha1.txt \
     && rm /tmp/containerpilot.tar.gz \
     && rm /tmp/containerpilot.sha1.txt
 
+FROM phusion/baseimage:latest
+
 # COPY ContainerPilot configuration
 ENV CONTAINERPILOT_PATH=/etc/containerpilot.json5
 COPY containerpilot.json5 ${CONTAINERPILOT_PATH}
 ENV CONTAINERPILOT=${CONTAINERPILOT_PATH}
 
-# Currently the prestart and prestop scripts are python, so we have to do this
-RUN apt-get update && apt-get install -y libsystemd-dev
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
-
-COPY ./bin/* /usr/local/bin/
-RUN chmod +x /usr/local/bin/*
+COPY --from=0 /bin/containerpilot /bin/containerpilot
+RUN chmod +x /bin/containerpilot
 
 COPY --from=0 /go/bin/echopilot /usr/local/bin/echopilot
 RUN chmod +x /usr/local/bin/echopilot
