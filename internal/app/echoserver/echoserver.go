@@ -35,22 +35,25 @@ func MakeHandler(fn func(http.ResponseWriter, *http.Request), logger Logger) htt
 	return func(w http.ResponseWriter, r *http.Request) {
 		begin := time.Now()
 		fn(w, r)
-		logger.Debugf("Served request for %s in %d", r.URL.Path, time.Since(begin)/time.Second)
-		logger.Debugf("Body content: %s", r.FormValue("data"))
+		logger.Debugf("Served request for %s in %v", r.URL.Path, time.Since(begin))
+		logger.Debugf("Body data field: %s", r.FormValue("data"))
 	}
 }
 
 func ServeWithReload(logger Logger, waitgroup *sync.WaitGroup, err chan<- error, done <-chan struct{}, hups <-chan os.Signal) {
 
+	m := http.NewServeMux()
+	m.HandleFunc("/", MakeHandler(EchoHandler, logger))
 	for {
-		m := http.NewServeMux()
-		m.HandleFunc("/", MakeHandler(EchoHandler, logger))
-		addr := "127.0.0.1:9090"
+		addr := os.Getenv("ECHO_ADDR")
+		if addr == "" {
+			addr = "127.0.0.1:8080"
+		}
 		s := &http.Server{Addr: addr, Handler: m}
 
 		go func(chan<- error) {
-			logger.Infof("Listending on %s", addr)
-			if e := s.ListenAndServe(); e != nil {
+			logger.Infof("Listening on %s", addr)
+			if e := s.ListenAndServe(); e != nil && e != http.ErrServerClosed {
 				err <- e
 			}
 			return
@@ -62,15 +65,21 @@ func ServeWithReload(logger Logger, waitgroup *sync.WaitGroup, err chan<- error,
 			begin := time.Now()
 			logger.Debug("Halting Server...")
 			ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-			s.Shutdown(ctx)
-			logger.Debug("Server halted in %s ms", time.Since(begin)/time.Millisecond)
+			if err := s.Shutdown(ctx); err != nil {
+				logger.Debugf("Failed to gracefully shutdown server: %v", err)
+			} else {
+				logger.Debugf("Server halted in %v", time.Since(begin))
+			}
 		case <-done:
 			logger.Info("Server shutting down...")
 			begin := time.Now()
 			logger.Debug("Halting Server...")
 			ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-			s.Shutdown(ctx)
-			logger.Debugf("Server halted in %s ms", time.Since(begin)/time.Millisecond)
+			if err := s.Shutdown(ctx); err != nil {
+				logger.Debugf("Failed to gracefully shutdown server: %v", err)
+			} else {
+				logger.Debugf("Server halted in %v", time.Since(begin))
+			}
 			waitgroup.Done()
 			return
 		}
@@ -92,6 +101,7 @@ func RunEchoServer(logger Logger) int {
 
 	done := make(chan struct{}, 1)
 	err := make(chan error, 1)
+	defer close(err)
 
 	waitgroup.Add(1)
 
@@ -103,11 +113,10 @@ func RunEchoServer(logger Logger) int {
 		logger.Info("Interrupt/kill recieved. Exiting...")
 		exitCode = 0
 		close(done)
-	case <-err:
-		logger.Errorf("Encoutered error %s. Exiting...", err)
+	case e := <-err:
+		logger.Errorf("Encoutered error %v. Exiting...", e)
 		close(done)
 	}
-	<-err
 	waitgroup.Wait()
 	logger.Info("All waits done. Execution complete.")
 	return exitCode

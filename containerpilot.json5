@@ -7,8 +7,13 @@
   },
   jobs: [
     {
+      name: "setup",
+      exec: "/usr/local/bin/prestart.py",
+      restarts: "never"
+    },
+    {
       name: "app",
-      exec: "/usr/local/bin/echo.py",
+      exec: "/usr/local/bin/echopilot serve",
       restarts: "unlimited",
       when: {
         source: "setup",
@@ -18,11 +23,6 @@
       tags: [
         "dev",
       ],
-    },
-    {
-      name: "setup",
-      exec: "/usr/local/bin/prestart.py",
-      restarts: "never"
     },
     {
       name: "preStop",

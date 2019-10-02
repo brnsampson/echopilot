@@ -20,10 +20,8 @@ import (
 	"github.com/spf13/cobra"
 	"os"
 
-	"github.com/brnsampson/echopilot/internal/app/echoserver"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
-	"go.uber.org/zap"
 )
 
 var cfgFile string
@@ -31,13 +29,16 @@ var cfgFile string
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "echopilot",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
+	Short: "Echo strings back to the user.",
+	Long: `Echopilot is an exapmle utility which can either echo
+commands as a cli or serve it through an http entdpoint. It also
+is intended to show how to build such a service as a docker
+container and provide the necessary files to run it as a systemd
+service.
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+This is not particularly useful in and of itself, but the
+hope is that we can provide a template or sorts for more
+complex projects..`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	//	Run: func(cmd *cobra.Command, args []string) { },
@@ -46,15 +47,10 @@ to quickly create a Cobra application.`,
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	logger, err := zap.NewDevelopment()
-	if err != nil {
-		fmt.Println("Failed to initialize logger!")
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Println(err)
 		os.Exit(1)
 	}
-	sugar := logger.Sugar()
-	defer sugar.Sync()
-	exitCode := echoserver.RunEchoServer(sugar)
-	os.Exit(exitCode)
 }
 
 func init() {
