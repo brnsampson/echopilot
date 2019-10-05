@@ -38,6 +38,10 @@ func equals(tb testing.TB, exp, act interface{}) {
 
 func TestEcho(t *testing.T) {
 	testString := "this is a test."
-	result := Echo(testString)
+	result, err := Echo(testString)
+	ok(t, err)
 	equals(t, testString, result)
 }
+
+// TODO: TestServeWithReload
+// TODO: TestMakeHandler

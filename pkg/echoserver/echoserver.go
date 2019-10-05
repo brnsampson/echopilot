@@ -21,14 +21,25 @@ type Logger interface {
 	Sync() error
 }
 
-func Echo(s string) string {
-	return s
+type comms struct {
+	wg   *sync.WaitGroup
+	err  chan<- error
+	done <-chan struct{}
+	sig  <-chan os.Signal
+}
+
+func Echo(s string) (string, error) {
+	return s, nil
 }
 
 func EchoHandler(w http.ResponseWriter, r *http.Request) {
 	data := r.FormValue("data")
-	resp := Echo(data)
-	fmt.Fprintf(w, resp)
+	resp, err := Echo(data)
+	if err != nil {
+		fmt.Fprint(w, "404")
+	} else {
+		fmt.Fprintf(w, resp)
+	}
 }
 
 func MakeHandler(fn func(http.ResponseWriter, *http.Request), logger Logger) http.HandlerFunc {
@@ -40,10 +51,13 @@ func MakeHandler(fn func(http.ResponseWriter, *http.Request), logger Logger) htt
 	}
 }
 
-func ServeWithReload(logger Logger, waitgroup *sync.WaitGroup, err chan<- error, done <-chan struct{}, hups <-chan os.Signal) {
-
+func MakeEchoMux(logger Logger) *http.ServeMux {
 	m := http.NewServeMux()
 	m.HandleFunc("/", MakeHandler(EchoHandler, logger))
+	return m
+}
+
+func ServeWithReload(m *http.ServeMux, logger Logger, c *comms) {
 	for {
 		addr := os.Getenv("ECHO_ADDR")
 		if addr == "" {
@@ -51,16 +65,16 @@ func ServeWithReload(logger Logger, waitgroup *sync.WaitGroup, err chan<- error,
 		}
 		s := &http.Server{Addr: addr, Handler: m}
 
-		go func(chan<- error) {
+		go func(err chan<- error) {
 			logger.Infof("Listening on %s", addr)
 			if e := s.ListenAndServe(); e != nil && e != http.ErrServerClosed {
 				err <- e
 			}
 			return
-		}(err)
+		}(c.err)
 
 		select {
-		case <-hups:
+		case <-c.sig:
 			logger.Info("SIGHUP recieved. Reloading...")
 			begin := time.Now()
 			logger.Debug("Halting Server...")
@@ -70,7 +84,7 @@ func ServeWithReload(logger Logger, waitgroup *sync.WaitGroup, err chan<- error,
 			} else {
 				logger.Debugf("Server halted in %v", time.Since(begin))
 			}
-		case <-done:
+		case <-c.done:
 			logger.Info("Server shutting down...")
 			begin := time.Now()
 			logger.Debug("Halting Server...")
@@ -80,13 +94,13 @@ func ServeWithReload(logger Logger, waitgroup *sync.WaitGroup, err chan<- error,
 			} else {
 				logger.Debugf("Server halted in %v", time.Since(begin))
 			}
-			waitgroup.Done()
+			c.wg.Done()
 			return
 		}
 	}
 }
 
-func RunEchoServer(logger Logger) int {
+func RunServer(m *http.ServeMux, logger Logger) int {
 	// First set up signal hanlding so that we can reload and stop.
 	hups := make(chan os.Signal, 1)
 	stop := make(chan os.Signal, 1)
@@ -105,7 +119,7 @@ func RunEchoServer(logger Logger) int {
 
 	waitgroup.Add(1)
 
-	go ServeWithReload(logger, &waitgroup, err, done, hups)
+	go ServeWithReload(m, logger, &comms{&waitgroup, err, done, hups})
 
 	exitCode := 1
 	select {
@@ -120,4 +134,9 @@ func RunEchoServer(logger Logger) int {
 	waitgroup.Wait()
 	logger.Info("All waits done. Execution complete.")
 	return exitCode
+}
+
+func RunEchoServer(logger Logger) int {
+	m := MakeEchoMux(logger)
+	return RunServer(m, logger)
 }

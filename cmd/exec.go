@@ -18,27 +18,25 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
 
-	// NOTE: if you fork this repo you will need to change this path.
+	//i NOTE: If you are forking this, then change this import to point to your repo.
 	"github.com/brnsampson/echopilot/pkg/echoserver"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
 
-// serveCmd represents the serve command
-var serveCmd = &cobra.Command{
-	Use:   "serve",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	Run: runServe,
+// execCmd represents the exec command
+var execCmd = &cobra.Command{
+	Use:   "exec",
+	Short: "Executes the core functionality of your pkg code as a cli-based tool",
+	Long: `Exec is the top-level command for any cli-based interactions with
+the code in your pkg/ directory. This is opposed to the 'serve' function
+which exposes the same functionality over REST or RPC interface.  `,
+	Run: runExec,
 }
 
-func runServe(cmd *cobra.Command, args []string) {
+func runExec(cmd *cobra.Command, args []string) {
 	logger, err := zap.NewDevelopment()
 	if err != nil {
 		fmt.Println("Failed to initialize logger!")
@@ -47,23 +45,28 @@ func runServe(cmd *cobra.Command, args []string) {
 	sugar := logger.Sugar()
 	defer sugar.Sync()
 
-	// NOTE: to chenge the behavior of this function change the remainder of this function.
-	exitCode := echoserver.RunEchoServer(sugar)
-	os.Exit(exitCode)
+	// NOTE: To change the command being run, change the following:
+	value := strings.Join(args, " ")
+	result, err := echoserver.Echo(value)
+	if err != nil {
+		sugar.Errorf("Error in Echo: %v", err)
+	}
+	fmt.Println(result)
+	os.Exit(0)
 }
 
 func init() {
-	rootCmd.AddCommand(serveCmd)
+	rootCmd.AddCommand(execCmd)
 
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	// serveCmd.PersistentFlags().String("foo", "", "A help for foo")
+	// execCmd.PersistentFlags().String("foo", "", "A help for foo")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// serveCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// execCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
-	// NOTE: add any additional flags here.
+	// NOTE: add wny additional command line options here:
 }
