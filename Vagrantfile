@@ -63,34 +63,39 @@ Vagrant.configure("2") do |config|
   # Enable provisioning with a shell script. Additional provisioners such as
   # Puppet, Chef, Ansible, Salt, and Docker are also available. Please see the
   # documentation for more information about their specific syntax and use.
-  config.vm.provision "shell", inline: <<-SHELL
+  $script = <<-SHELL
+    cp /home/vagrant
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
     sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-    apt-get update
-    apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common
-    apt-get install -y docker-ce docker-ce-cli containerd.io
-    docker pull consul
-    docker pull vault
-    docker pull fluent/fluent-bit
-    docker pull telegraf
-    docker pull influxdb
+    sudo apt-get update
+    sudo apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+    sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+    sudo docker pull consul
+    sudo docker pull vault
+    sudo docker pull fluent/fluent-bit
+    sudo docker pull telegraf
+    sudo docker pull influxdb
     wget https://dl.google.com/go/go1.13.linux-amd64.tar.gz
-    tar -C /usr/local -xzf go1.13.linux-amd64.tar.gz
-    echo 'export PATH=$PATH:/usr/local/go/bin' >> /home/vagrant/.bashrc
-    go get github.com/coreos/sdnotify-proxy && sudo cp ~/go/bin/sdnotify-proxy /usr/local/bin/
-    go get -u github.com/brnsampson/echopilot.git
+    sudo tar -C /usr/local -xzf go1.13.linux-amd64.tar.gz
+    mkdir /home/vagrant/go
+    sudo chown vagrant:vagrant /home/vagrant/go
+    echo 'PATH=$PATH:/home/vagrant/go/bin' >> /home/vagrant/.bashrc
     PATH=$PATH:/usr/local/go/bin:/home/vagrant/go/bin
+    go get github.com/coreos/sdnotify-proxy && sudo cp ~/go/bin/sdnotify-proxy /usr/local/bin/
+    go get -u github.com/brnsampson/echopilot
     ln -s /home/vagrant/go/src/github.com/brnsampson/echopilot /home/vagrant/echopilot
-    docker build -t echopilot /home/vagrant/go/src/github.com/brnsampson/echopilot/
-    cp echopilot/systemd/echopilot.service /etc/systemd/system/
-    cp echopilot/systemd/telegraf.service /etc/systemd/system/
-    cp echopilot/systemd/fluent-bit.service /etc/systemd/system/
-    mkdir -p /etc/telegraf/
-    cp echopilot/etc/telegraf.conf /etc/telegraf/
-    mkdir -p /etc/fluent-bit
-    cp echopilot/etc/fluent-bit.conf /etc/fluent-bit/
+    sudo docker build -t echopilot /home/vagrant/go/src/github.com/brnsampson/echopilot/
+    sudo cp echopilot/systemd/echopilot.service /etc/systemd/system/
+    sudo cp echopilot/systemd/telegraf.service /etc/systemd/system/
+    sudo cp echopilot/systemd/fluent-bit.service /etc/systemd/system/
+    sudo mkdir -p /etc/telegraf/
+    sudo cp echopilot/etc/telegraf.conf /etc/telegraf/
+    sudo mkdir -p /etc/fluent-bit
+    sudo cp echopilot/etc/fluent-bit.conf /etc/fluent-bit/
     git clone https://github.com/fatih/vim-go.git ~/.vim/pack/plugins/start/vim-go
-    echo 'PATH=$PATH:/home/vagrant/go/bin' >> /vagrant/home/.bashrc
-    echo 'EXPORT GOPATH=/home/vagrant/go' >> /vagrant/home/.bashrc
   SHELL
+
+  config.vm.provision "shell",
+    inline: $script,
+    privileged: false
 end
