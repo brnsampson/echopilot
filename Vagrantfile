@@ -84,7 +84,9 @@ Vagrant.configure("2") do |config|
     go get github.com/coreos/sdnotify-proxy && sudo cp ~/go/bin/sdnotify-proxy /usr/local/bin/
     go get -u github.com/brnsampson/echopilot
     ln -s /home/vagrant/go/src/github.com/brnsampson/echopilot /home/vagrant/echopilot
-    sudo docker build -t echopilot /home/vagrant/go/src/github.com/brnsampson/echopilot/
+    cd /home/vagrant/echopilot
+    git checkout python-example
+    sudo docker build -t echopilot /home/vagrant/echopilot/
     sudo cp echopilot/systemd/echopilot.service /etc/systemd/system/
     sudo cp echopilot/systemd/telegraf.service /etc/systemd/system/
     sudo cp echopilot/systemd/fluent-bit.service /etc/systemd/system/
