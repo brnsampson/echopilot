@@ -8,12 +8,12 @@
   jobs: [
     {
       name: "setup",
-      exec: "/usr/local/bin/echopilot systemd notify -s ready",
+      exec: "/usr/local/bin/prestart.py",
       restarts: "never"
     },
     {
       name: "app",
-      exec: "/usr/local/bin/echopilot serve",
+      exec: "/usr/local/bin/echo.py",
       restarts: "unlimited",
       when: {
         source: "setup",
@@ -30,7 +30,7 @@
         source: "app",
         once: "stopping"
       },
-      exec: "/usr/local/bin/echopilot systemd notify -s stopping",
+      exec: "/usr/local/bin/prestop.py",
       restarts: "never",
     }
   ]
