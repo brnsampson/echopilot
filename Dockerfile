@@ -1,10 +1,14 @@
-FROM python:3
+FROM golang:1.13
 
-WORKDIR /usr/src/app
+WORKDIR /go/src/github.com/brnsampson/echopilot
 
-RUN apt-get update && apt-get install -y libsystemd-dev
+COPY . .
+
+RUN go get -d -v ./...
+RUN go install -v ./...
 
 ENV CONTAINERPILOT_VERSION 3.8.0
+
 RUN curl -Lso /tmp/containerpilot.sha1.txt \
          "https://github.com/joyent/containerpilot/releases/download/${CONTAINERPILOT_VERSION}/containerpilot-${CONTAINERPILOT_VERSION}.sha1.txt" \
     && export CP_SHA1=$( cat /tmp/containerpilot.sha1.txt | grep containerpilot-${CONTAINERPILOT_VERSION}.tar.gz | awk '{print $1}' ) \
@@ -15,17 +19,20 @@ RUN curl -Lso /tmp/containerpilot.sha1.txt \
     && rm /tmp/containerpilot.tar.gz \
     && rm /tmp/containerpilot.sha1.txt
 
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+FROM phusion/baseimage:latest
 
 # COPY ContainerPilot configuration
 ENV CONTAINERPILOT_PATH=/etc/containerpilot.json5
 COPY containerpilot.json5 ${CONTAINERPILOT_PATH}
 ENV CONTAINERPILOT=${CONTAINERPILOT_PATH}
 
-COPY ./bin/* /usr/local/bin/
-RUN chmod +x /usr/local/bin/* 
+COPY --from=0 /bin/containerpilot /bin/containerpilot
+RUN chmod +x /bin/containerpilot
 
+COPY --from=0 /go/bin/echopilot /usr/local/bin/echopilot
+RUN chmod +x /usr/local/bin/echopilot
+
+ENV ECHO_ADDR="0.0.0.0:8080"
 
 ENTRYPOINT []
 

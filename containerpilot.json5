@@ -7,8 +7,13 @@
   },
   jobs: [
     {
+      name: "setup",
+      exec: "/usr/local/bin/echopilot systemd notify -s ready",
+      restarts: "never"
+    },
+    {
       name: "app",
-      exec: "/usr/local/bin/echo.py",
+      exec: "/usr/local/bin/echopilot serve",
       restarts: "unlimited",
       when: {
         source: "setup",
@@ -20,17 +25,12 @@
       ],
     },
     {
-      name: "setup",
-      exec: "/usr/local/bin/prestart.py",
-      restarts: "never"
-    },
-    {
       name: "preStop",
       when: {
         source: "app",
         once: "stopping"
       },
-      exec: "/usr/local/bin/prestop.py",
+      exec: "/usr/local/bin/echopilot systemd notify -s stopping",
       restarts: "never",
     }
   ]
