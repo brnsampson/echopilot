@@ -78,11 +78,11 @@ Vagrant.configure("2") do |config|
     wget https://dl.google.com/go/go1.13.linux-amd64.tar.gz
     sudo tar -C /usr/local -xzf go1.13.linux-amd64.tar.gz
     mkdir /home/vagrant/go
-    sudo chmown vagrant:vagrant /home/vagrant/go
+    sudo chown vagrant:vagrant /home/vagrant/go
     echo 'PATH=$PATH:/home/vagrant/go/bin' >> /home/vagrant/.bashrc
     PATH=$PATH:/usr/local/go/bin:/home/vagrant/go/bin
     go get github.com/coreos/sdnotify-proxy && sudo cp ~/go/bin/sdnotify-proxy /usr/local/bin/
-    go get -u github.com/brnsampson/echopilot.git
+    go get -u github.com/brnsampson/echopilot
     ln -s /home/vagrant/go/src/github.com/brnsampson/echopilot /home/vagrant/echopilot
     sudo docker build -t echopilot /home/vagrant/go/src/github.com/brnsampson/echopilot/
     sudo cp echopilot/systemd/echopilot.service /etc/systemd/system/
