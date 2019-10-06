@@ -16,7 +16,7 @@ Some things that would be nice for the future:
 - finish off watchdog part of echopilot app/systemd service
 
 
-# Prerequisites:
+# Prerequisites (only needed if you really don't want to use vagrant for some reason):
 
 - Install docker: https://docs.docker.com/install/
 - Install go: https://golang.org/doc/install
@@ -24,3 +24,35 @@ Some things that would be nice for the future:
 - Add everything in systemd/ to the /etc/systemd/system/ directory in order to add the new services to systemd
 - Add the config files in etc/ to the relevant location in /etc/
 - Build with docker build -t echopilot .
+
+
+
+# Sources (in addition to logs of stack overflow and stuff I'm sure I lost track of):
+
+general go patterns:
+- https://github.com/thockin/go-build-template
+- https://medium.com/statuscode/how-i-write-go-http-services-after-seven-years-37c208122831
+
+testing:
+- https://blog.alexellis.io/golang-writing-unit-tests/
+- https://github.com/benbjohnson/testing
+- https://medium.com/@benbjohnson/structuring-tests-in-go-46ddee7a25c
+
+signal handling:
+- https://github.com/benbjohnson/testing
+- https://www.openmymind.net/Golang-Hot-Configuration-Reload/
+- https://gravitational.com/blog/golang-ssh-bastion-graceful-restarts/
+- https://gist.github.com/peterhellberg/38117e546c217960747aacf689af3dc2
+
+systemd hyjinks:
+- https://github.com/coreos/go-systemd
+
+docker stuff:
+- https://hub.docker.com/r/phusion/baseimage/
+
+
+Things to investigate for the future(?):
+- https://gist.github.com/rivo/f96ad8710b54a49180a314ec4d68dbfb
+- https://grisha.org/blog/2014/06/03/graceful-restart-in-golang/
+
+If I used your resources, no matter how small, thank you! It would have been beyond my patience to figure all of these things out by myself.
