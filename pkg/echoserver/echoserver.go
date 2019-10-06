@@ -11,6 +11,27 @@ import (
 	"time"
 )
 
+// Section 1: application specific functionas and behavior. This could potentially be moved into
+// a separate file if it gets extensive enough.s
+func Echo(s string) (string, error) {
+	return s, nil
+}
+
+func (s *server) EchoHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		data := r.FormValue("data")
+		resp, err := Echo(data)
+		if err != nil {
+			s.logger.Errorf("echoHandler: %v", err)
+			http.NotFound(w, r)
+		} else {
+			fmt.Fprintf(w, resp)
+		}
+		return
+	}
+}
+
+// This interface can and will probably need to be modified if you don't want to use the uber zap logger.
 type Logger interface {
 	Debug(...interface{})
 	Debugf(string, ...interface{})
@@ -21,86 +42,107 @@ type Logger interface {
 	Sync() error
 }
 
-type comms struct {
-	wg   *sync.WaitGroup
-	err  chan<- error
-	done <-chan struct{}
-	sig  <-chan os.Signal
+// Section 2: common server implementation boilerplate
+type server struct {
+	logger   Logger
+	router   *http.ServeMux
+	wg       sync.WaitGroup
+	err      chan error
+	done     chan struct{}
+	stop     chan os.Signal
+	sig      chan os.Signal
+	exitCode int
 }
 
-func Echo(s string) (string, error) {
-	return s, nil
+func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.router.ServeHTTP(w, r)
 }
 
-func EchoHandler(w http.ResponseWriter, r *http.Request) {
-	data := r.FormValue("data")
-	resp, err := Echo(data)
-	if err != nil {
-		fmt.Fprint(w, "404")
-	} else {
-		fmt.Fprintf(w, resp)
-	}
-}
-
-func MakeHandler(fn func(http.ResponseWriter, *http.Request), logger Logger) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		begin := time.Now()
-		fn(w, r)
-		logger.Debugf("Served request for %s in %v", r.URL.Path, time.Since(begin))
-		logger.Debugf("Body data field: %s", r.FormValue("data"))
-	}
-}
-
-func MakeEchoMux(logger Logger) *http.ServeMux {
-	m := http.NewServeMux()
-	m.HandleFunc("/", MakeHandler(EchoHandler, logger))
-	return m
-}
-
-func ServeWithReload(m *http.ServeMux, logger Logger, c *comms) {
+func (s *server) ServeWithReload() {
 	for {
 		addr := os.Getenv("ECHO_ADDR")
 		if addr == "" {
 			addr = "127.0.0.1:8080"
 		}
-		s := &http.Server{Addr: addr, Handler: m}
+		serv := &http.Server{Addr: addr, Handler: s.router}
 
 		go func(err chan<- error) {
-			logger.Infof("Listening on %s", addr)
-			if e := s.ListenAndServe(); e != nil && e != http.ErrServerClosed {
+			s.logger.Infof("Listening on %s", addr)
+			if e := serv.ListenAndServe(); e != nil && e != http.ErrServerClosed {
 				err <- e
 			}
 			return
-		}(c.err)
+		}(s.err)
 
 		select {
-		case <-c.sig:
-			logger.Info("SIGHUP recieved. Reloading...")
+		case <-s.sig:
+			s.logger.Info("SIGHUP recieved. Reloading...")
 			begin := time.Now()
-			logger.Debug("Halting Server...")
+			s.logger.Debug("Halting Server...")
 			ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-			if err := s.Shutdown(ctx); err != nil {
-				logger.Debugf("Failed to gracefully shutdown server: %v", err)
+			if err := serv.Shutdown(ctx); err != nil {
+				s.logger.Debugf("Failed to gracefully shutdown server: %v", err)
 			} else {
-				logger.Debugf("Server halted in %v", time.Since(begin))
+				s.logger.Debugf("Server halted in %v", time.Since(begin))
 			}
-		case <-c.done:
-			logger.Info("Server shutting down...")
+		case <-s.done:
+			s.logger.Info("Server shutting down...")
 			begin := time.Now()
-			logger.Debug("Halting Server...")
+			s.logger.Debug("Halting Server...")
 			ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-			if err := s.Shutdown(ctx); err != nil {
-				logger.Debugf("Failed to gracefully shutdown server: %v", err)
+			if err := serv.Shutdown(ctx); err != nil {
+				s.logger.Debugf("Failed to gracefully shutdown server: %v", err)
 			} else {
-				logger.Debugf("Server halted in %v", time.Since(begin))
+				s.logger.Debugf("Server halted in %v", time.Since(begin))
 			}
-			c.wg.Done()
+			s.wg.Done()
 			return
 		}
 	}
 }
 
-func RunServer(m *http.ServeMux, logger Logger) int {
+func (s *server) Run() {
+	s.wg.Add(1)
+	go s.waitOnInterrupt()
+	go s.ServeWithReload()
+	return
+}
+
+func (s *server) BlockingRun() int {
+	s.wg.Add(1)
+	go s.ServeWithReload()
+	s.waitOnInterrupt()
+	return s.exitCode
+}
+
+func (s *server) waitOnInterrupt() {
+	select {
+	case <-s.stop:
+		s.logger.Info("Interrupt/kill recieved. Exiting...")
+		s.exitCode = 0
+		s.Shutdown()
+	case e := <-s.err:
+		s.logger.Errorf("Encoutered error %v. Exiting...", e)
+		s.Shutdown()
+		s.exitCode = 1
+	}
+}
+
+func (s *server) Shutdown() {
+	signal.Stop(s.sig)
+	signal.Stop(s.stop)
+	close(s.done)
+
+	s.wg.Wait()
+	s.logger.Info("All waits done. Server execution complete.")
+
+	close(s.stop)
+	close(s.sig)
+	close(s.err)
+	return
+}
+
+func NewServer(logger Logger) *server {
 	// First set up signal hanlding so that we can reload and stop.
 	hups := make(chan os.Signal, 1)
 	stop := make(chan os.Signal, 1)
@@ -108,35 +150,15 @@ func RunServer(m *http.ServeMux, logger Logger) int {
 	signal.Notify(hups, syscall.SIGHUP)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 
-	defer signal.Stop(hups)
-	defer signal.Stop(stop)
-
 	var waitgroup sync.WaitGroup
 
 	done := make(chan struct{}, 1)
 	err := make(chan error, 1)
-	defer close(err)
 
-	waitgroup.Add(1)
+	m := http.NewServeMux()
 
-	go ServeWithReload(m, logger, &comms{&waitgroup, err, done, hups})
-
-	exitCode := 1
-	select {
-	case <-stop:
-		logger.Info("Interrupt/kill recieved. Exiting...")
-		exitCode = 0
-		close(done)
-	case e := <-err:
-		logger.Errorf("Encoutered error %v. Exiting...", e)
-		close(done)
-	}
-	waitgroup.Wait()
-	logger.Info("All waits done. Execution complete.")
-	return exitCode
-}
-
-func RunEchoServer(logger Logger) int {
-	m := MakeEchoMux(logger)
-	return RunServer(m, logger)
+	// If exitCode is -1 then execution has not completed yet.
+	server := &server{logger, m, waitgroup, err, done, stop, hups, -1}
+	server.routes()
+	return server
 }

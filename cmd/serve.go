@@ -48,7 +48,11 @@ func runServe(cmd *cobra.Command, args []string) {
 	defer sugar.Sync()
 
 	// NOTE: to chenge the behavior of this function change the remainder of this function.
-	exitCode := echoserver.RunEchoServer(sugar)
+	var srv interface {
+		BlockingRun() int
+	}
+	srv = echoserver.NewServer(sugar)
+	exitCode := srv.BlockingRun()
 	os.Exit(exitCode)
 }
 
