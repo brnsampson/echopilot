@@ -79,7 +79,7 @@ Vagrant.configure("2") do |config|
     sudo tar -C /usr/local -xzf go1.13.linux-amd64.tar.gz
     mkdir /home/vagrant/go
     sudo chown vagrant:vagrant /home/vagrant/go
-    echo 'PATH=$PATH:/home/vagrant/go/bin' >> /home/vagrant/.bashrc
+    echo 'PATH=$PATH:/usr/local/go/bin:/home/vagrant/go/bin' >> /home/vagrant/.bashrc
     PATH=$PATH:/usr/local/go/bin:/home/vagrant/go/bin
     go get github.com/coreos/sdnotify-proxy && sudo cp ~/go/bin/sdnotify-proxy /usr/local/bin/
     go get -u github.com/brnsampson/echopilot
@@ -93,6 +93,10 @@ Vagrant.configure("2") do |config|
     sudo mkdir -p /etc/fluent-bit
     sudo cp echopilot/etc/fluent-bit.conf /etc/fluent-bit/
     git clone https://github.com/fatih/vim-go.git ~/.vim/pack/plugins/start/vim-go
+
+    # Now we will set up react
+    wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.0/install.sh | bash
+    nvm install node
   SHELL
 
   config.vm.provision "shell",

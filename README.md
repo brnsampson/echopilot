@@ -26,6 +26,18 @@ Some things that would be nice for the future:
 - Build with docker build -t echopilot .
 
 
+# Working with the react part
+
+This is a little weird, but it seems to be effective.
+
+- The result of the build can be placed into ./dist
+- TODO: make it so that you can run the binary anywhere instead of only inside the echopilot directory
+- the react project is under ./ui/
+- npm run build to make a new build folder
+- cp -r build/* ../dist/ to make the production files available to go
+- it currently is not necessary to rebuid the binary to pick up changes
+- the npm start command does run the dev server, but for some reason it isn't proxying to the echopilot api correctly yet
+- the dockerfile copys in whatever is currently in ./dist/, so you have to update the react content there
 
 # Sources (in addition to logs of stack overflow and stuff I'm sure I lost track of):
 

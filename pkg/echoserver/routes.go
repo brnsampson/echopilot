@@ -15,6 +15,19 @@ func WrapHandler(fn http.HandlerFunc, logger Logger) http.HandlerFunc {
 	}
 }
 
+func IndexHandler(entrypoint string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			filePath := "./dist" + r.URL.Path
+			http.ServeFile(w, r, filePath)
+		} else {
+			http.ServeFile(w, r, entrypoint)
+		}
+	}
+}
+
 func (s *server) routes() {
-	s.router.HandleFunc("/", WrapHandler(s.EchoHandler(), s.logger))
+	s.router.HandleFunc("/api/echo", WrapHandler(s.EchoHandler(), s.logger))
+	s.router.Handle("/dist", http.FileServer(http.Dir("./dist")))
+	s.router.HandleFunc("/", WrapHandler(IndexHandler("./dist/index.html"), s.logger))
 }
