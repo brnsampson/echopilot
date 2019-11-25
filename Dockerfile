@@ -26,6 +26,8 @@ ENV CONTAINERPILOT_PATH=/etc/containerpilot.json5
 COPY containerpilot.json5 ${CONTAINERPILOT_PATH}
 ENV CONTAINERPILOT=${CONTAINERPILOT_PATH}
 
+COPY ./dist ./dist
+
 COPY --from=0 /bin/containerpilot /bin/containerpilot
 RUN chmod +x /bin/containerpilot
 

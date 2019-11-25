@@ -29,6 +29,10 @@ Vagrant.configure("2") do |config|
   # within the machine from a port on the host machine and only allow access
   # via 127.0.0.1 to disable public access
   config.vm.network "forwarded_port", guest: 8080, host: 8080, host_ip: "127.0.0.1"
+  
+  # This one is so that we can use `elm reactor` to rapidly test out ui changes
+  # without conflicting with the actual echoserver
+  config.vm.network "forwarded_port", guest: 8000, host: 8000, host_ip: "127.0.0.1"
 
   # Create a private network, which allows host-only access to the machine
   # using a specific IP.
@@ -79,10 +83,14 @@ Vagrant.configure("2") do |config|
     sudo tar -C /usr/local -xzf go1.13.linux-amd64.tar.gz
     mkdir /home/vagrant/go
     sudo chown vagrant:vagrant /home/vagrant/go
-    echo 'PATH=$PATH:/home/vagrant/go/bin' >> /home/vagrant/.bashrc
+    echo 'PATH=$PATH:/usr/local/go/bin:/home/vagrant/go/bin' >> /home/vagrant/.bashrc
     PATH=$PATH:/usr/local/go/bin:/home/vagrant/go/bin
     go get github.com/coreos/sdnotify-proxy && sudo cp ~/go/bin/sdnotify-proxy /usr/local/bin/
     go get -u github.com/brnsampson/echopilot
+    curl -L -o elm.gz https://github.com/elm/compiler/releases/download/0.19.1/binary-for-linux-64-bit.gz
+    gunzip elm.gz
+    chmod +x elm
+    sudo mv elm /usr/local/bin/
     ln -s /home/vagrant/go/src/github.com/brnsampson/echopilot /home/vagrant/echopilot
     sudo docker build -t echopilot /home/vagrant/go/src/github.com/brnsampson/echopilot/
     sudo cp echopilot/systemd/echopilot.service /etc/systemd/system/
@@ -93,6 +101,10 @@ Vagrant.configure("2") do |config|
     sudo mkdir -p /etc/fluent-bit
     sudo cp echopilot/etc/fluent-bit.conf /etc/fluent-bit/
     git clone https://github.com/fatih/vim-go.git ~/.vim/pack/plugins/start/vim-go
+
+    # Now we will set up react
+    wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.0/install.sh | bash
+    nvm install node
   SHELL
 
   config.vm.provision "shell",

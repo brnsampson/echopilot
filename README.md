@@ -21,11 +21,20 @@ Some things that would be nice for the future:
 - Install docker: https://docs.docker.com/install/
 - Install go: https://golang.org/doc/install
 - Install sdnotify-proxy: go get github.com/coreos/sdnotify-proxy && sudo cp ~/go/bin/sdnotify-proxy /usr/local/bin/
+- Install elm: curl -L -o elm.gz https://github.com/elm/compiler/releases/download/0.19.1/binary-for-linux-64-bit.gz && gunzip elm.gz && sudo mv elm /usr/local/bin/
 - Add everything in systemd/ to the /etc/systemd/system/ directory in order to add the new services to systemd
 - Add the config files in etc/ to the relevant location in /etc/
+- Build the elm code and populate /dist (see below)
 - Build with docker build -t echopilot .
 
 
+# Working with the elm part
+This is actually really simple. Elm just compiles down to either a single .js or a single html that we can serve as static concent.
+- Working directory: ui/
+- Build: elm make src/Main.elm && mv index.html ../dist/
+- That's literally all there is to it
+
+- the dockerfile copys in whatever is currently in ./dist/, so after updating the ui code and building you will have to rebuild the docker container.
 
 # Sources (in addition to logs of stack overflow and stuff I'm sure I lost track of):
 
@@ -50,6 +59,10 @@ systemd hyjinks:
 docker stuff:
 - https://hub.docker.com/r/phusion/baseimage/
 
+elm:
+- https://guide.elm-lang.org/
+- https://package.elm-lang.org/
+- https://elmprogramming.com/fetching-data-using-get.html
 
 Things to investigate for the future(?):
 - https://gist.github.com/rivo/f96ad8710b54a49180a314ec4d68dbfb

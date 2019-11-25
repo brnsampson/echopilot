@@ -2,7 +2,7 @@ package echoserver
 
 import (
 	"context"
-	"fmt"
+	"encoding/json"
 	"net/http"
 	"os"
 	"os/signal"
@@ -13,6 +13,10 @@ import (
 
 // Section 1: application specific functionas and behavior. This could potentially be moved into
 // a separate file if it gets extensive enough.s
+type EchoResponse struct {
+	Response string
+}
+
 func Echo(s string) (string, error) {
 	return s, nil
 }
@@ -20,13 +24,22 @@ func Echo(s string) (string, error) {
 func (s *server) EchoHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		data := r.FormValue("data")
-		resp, err := Echo(data)
+		respValue, err := Echo(data)
 		if err != nil {
 			s.logger.Errorf("echoHandler: %v", err)
 			http.NotFound(w, r)
-		} else {
-			fmt.Fprintf(w, resp)
 		}
+
+		resp := EchoResponse{Response: respValue}
+		respJson, err := json.Marshal(resp)
+		if err != nil {
+			s.logger.Errorf("echoHandler: %v", err)
+			http.NotFound(w, r)
+		}
+
+		w.WriteHeader(200)
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(respJson)
 		return
 	}
 }
