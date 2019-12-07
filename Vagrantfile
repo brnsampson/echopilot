@@ -33,6 +33,7 @@ Vagrant.configure("2") do |config|
   # This one is so that we can use `elm reactor` to rapidly test out ui changes
   # without conflicting with the actual echoserver
   config.vm.network "forwarded_port", guest: 8000, host: 8000, host_ip: "127.0.0.1"
+  config.vm.network "forwarded_port", guest: 19999, host: 19999, host_ip: "127.0.0.1"
 
   # Create a private network, which allows host-only access to the machine
   # using a specific IP.
@@ -79,6 +80,8 @@ Vagrant.configure("2") do |config|
     sudo docker pull fluent/fluent-bit
     sudo docker pull telegraf
     sudo docker pull influxdb
+    sudo docker pull netdata/netdata:v1.19.0
+    sudo docker pull tecnativa/docker-socket-proxy
     wget https://dl.google.com/go/go1.13.linux-amd64.tar.gz
     sudo tar -C /usr/local -xzf go1.13.linux-amd64.tar.gz
     mkdir /home/vagrant/go
@@ -96,6 +99,8 @@ Vagrant.configure("2") do |config|
     sudo cp echopilot/systemd/echopilot.service /etc/systemd/system/
     sudo cp echopilot/systemd/telegraf.service /etc/systemd/system/
     sudo cp echopilot/systemd/fluent-bit.service /etc/systemd/system/
+    sudo cp echopilot/systemd/netdata.service /etc/systemd/system/
+    sudo cp echopilot/systemd/docker-proxy.service /etc/systemd/system/
     sudo mkdir -p /etc/telegraf/
     sudo cp echopilot/etc/telegraf.conf /etc/telegraf/
     sudo mkdir -p /etc/fluent-bit
