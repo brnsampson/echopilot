@@ -27,6 +27,25 @@ Some things that would be nice for the future:
 - Build the elm code and populate /dist (see below)
 - Build with docker build -t echopilot .
 
+# Testing
+run tests with
+`go test github.com/brnsampson/echopilot/pkg/echoserver`
+
+# Building
+First build the protobuf definition, rest gateway, and swagger doc
+ protoc -I/usr/local/include -I. -I$GOPATH/src -I$GOPATH/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis --swagger_out=logtostderr=true:. --grpc-gateway_out=logtostderr=true:$GOPATH/src --go_out=plugins=grpc:$GOPATH/src proto/echo/echo.proto; cp proto/echo/echo.swagger.json ./dist/swagger.json
+
+build and install with
+`go install github.com/brnsampson/echopilot`
+
+Then run by going to the echopilot directory and running
+`echopilot serve`
+
+To instead build the docker container simply go to the echopilot directory and run
+`sudo docker build -t echopilot /home/vagrant/go/src/github.com/brnsampson/echopilot/`
+
+Then run via
+`sudo docker run --rm -p 3000:8080 echopilot`
 
 # Working with the elm part
 This is actually really simple. Elm just compiles down to either a single .js or a single html that we can serve as static concent.
@@ -63,6 +82,15 @@ elm:
 - https://guide.elm-lang.org/
 - https://package.elm-lang.org/
 - https://elmprogramming.com/fetching-data-using-get.html
+
+grpc:
+- https://github.com/grpc/grpc-go/tree/master/examples
+- https://github.com/grpc-ecosystem/grpc-gateway
+- https://github.com/grpc-ecosystem/grpc-opentracing
+- https://levelup.gitconnected.com/grpc-basics-part-2-rest-and-swagger-53ec2417b3c4
+- https://github.com/scottyw/grpc-example
+- https://github.com/swagger-api/swagger-ui
+- https://medium.com/@ribice/serve-swaggerui-within-your-golang-application-5486748a5ed4
 
 Things to investigate for the future(?):
 - https://gist.github.com/rivo/f96ad8710b54a49180a314ec4d68dbfb

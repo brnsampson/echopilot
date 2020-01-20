@@ -7,7 +7,9 @@ import Html exposing (Html, Attribute, div, input, text, button)
 import Html.Events exposing (onClick, onInput)
 import Html.Attributes exposing (..)
 import Http
+import Url.Builder exposing (relative)
 import Json.Decode exposing (Decoder, field, string)
+import Json.Encode
 
 main = Browser.element {init = init, view = view, update = update, subscriptions = subscriptions}
 
@@ -95,11 +97,16 @@ subscriptions model =
 -- HTTP
 echoString : String -> Cmd Msg
 echoString value =
-  Http.get
-    { url = "http://localhost:8080/api/echo?data=" ++ value
+  Http.post
+    { url = relative ["v1", "api", "echo"] []
+    , body = Http.jsonBody (echoJson value)
     , expect = Http.expectJson GotJson jsonDecoder
     }
 
+echoJson : String -> Json.Encode.Value
+echoJson value =
+  Json.Encode.object [ ( "content", Json.Encode.string value ) ]
+
 jsonDecoder : Decoder String
 jsonDecoder =
-  field "Response" string
+  field "content" string

@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+option go_package = "github.com/brnsampson/echopilot/proto/echo";
+
+package echo;
+
+import "google/api/annotations.proto";
+
+// The echo service definition.
+service Echo {
+	// Echos a string back to sender
+	rpc Echo (EchoRequest) returns (EchoReply) {
+		option (google.api.http) = {
+			post: "/v1/api/echo"
+			body: "*"
+		};
+	}
+}
+
+// The request message containing a user defined string.
+message EchoRequest {
+  string content = 1;
+}
+
+// The response message containing the content of the original requests
+message EchoReply {
+  string content = 1;
+}
+
