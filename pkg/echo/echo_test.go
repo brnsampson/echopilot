@@ -1,12 +1,11 @@
-package echoserver_test
+package echo_test
 
 import (
 	"fmt"
-	"github.com/brnsampson/echopilot/pkg/echoserver"
+	"github.com/brnsampson/echopilot/pkg/echo"
 	"path/filepath"
 	"reflect"
 	"runtime"
-	"strings"
 	"testing"
 )
 
@@ -37,43 +36,9 @@ func equals(tb testing.TB, exp, act interface{}) {
 	}
 }
 
-type testLogger struct {
-	debugs []string
-	infos  []string
-	errors []string
-}
-
-func (t *testLogger) Debug(is ...interface{}) {
-	for _, i := range is {
-		t.debugs = append(t.debugs, fmt.Sprint(i))
-	}
-}
-
-func (t *testLogger) Info(is ...interface{}) {
-	for _, i := range is {
-		t.infos = append(t.infos, fmt.Sprint(i))
-	}
-}
-
-func (t *testLogger) Error(is ...interface{}) {
-	for _, i := range is {
-		t.errors = append(t.errors, fmt.Sprint(i))
-	}
-}
-
-func (t *testLogger) Debugf(s string, is ...interface{}) {
-	t.debugs = append(t.debugs, fmt.Sprintf(s, is...))
-}
-
-func (t *testLogger) Infof(s string, is ...interface{}) {
-	t.infos = append(t.infos, fmt.Sprintf(s, is...))
-}
-
-func (t *testLogger) Errorf(s string, is ...interface{}) {
-	t.errors = append(t.errors, fmt.Sprintf(s, is...))
-}
-
-func (t *testLogger) Sync() error {
-	fmt.Println("test logger sync'd")
-	return nil
+func TestEcho(t *testing.T) {
+	testString := "Testeroo"
+	result, err := echo.EchoString(testString)
+	ok(t, err)
+	equals(t, testString, result)
 }

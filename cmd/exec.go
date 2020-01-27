@@ -21,7 +21,7 @@ import (
 	"strings"
 
 	//i NOTE: If you are forking this, then change this import to point to your repo.
-	"github.com/brnsampson/echopilot/pkg/echoserver"
+	"github.com/brnsampson/echopilot/pkg/echo"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
@@ -47,7 +47,7 @@ func runExec(cmd *cobra.Command, args []string) {
 
 	// NOTE: To change the command being run, change the following:
 	value := strings.Join(args, " ")
-	result, err := echoserver.Echo(value)
+	result, err := echo.EchoString(value)
 	if err != nil {
 		sugar.Errorf("Error in Echo: %v", err)
 	}
