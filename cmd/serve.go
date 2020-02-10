@@ -20,7 +20,7 @@ import (
 	"os"
 
 	// NOTE: if you fork this repo you will need to change this path.
-	"github.com/brnsampson/echopilot/pkg/echoserver"
+	"github.com/brnsampson/echopilot/internal/echoserver"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )

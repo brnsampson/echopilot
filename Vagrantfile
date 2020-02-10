@@ -110,10 +110,12 @@ Vagrant.configure("2") do |config|
     ln -s /home/vagrant/go/src/github.com/brnsampson/echopilot /home/vagrant/echopilot
     sudo docker build -t echopilot /home/vagrant/go/src/github.com/brnsampson/echopilot/
     sudo cp echopilot/systemd/echopilot.service /etc/systemd/system/
+    sudo cp echopilot/systemd/consul.service /etc/systemd/system/
     sudo cp echopilot/systemd/telegraf.service /etc/systemd/system/
     sudo cp echopilot/systemd/fluent-bit.service /etc/systemd/system/
     sudo cp echopilot/systemd/netdata.service /etc/systemd/system/
     sudo cp echopilot/systemd/docker-proxy.service /etc/systemd/system/
+    sudo cp -r echopilot/etc/consul/* /etc/consul/
     sudo mkdir -p /etc/telegraf/
     sudo cp echopilot/etc/telegraf.conf /etc/telegraf/
     sudo mkdir -p /etc/fluent-bit

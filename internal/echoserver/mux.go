@@ -2,7 +2,7 @@ package echoserver
 
 import (
 	"context"
-	gw "github.com/brnsampson/echopilot/proto/echo"
+	gw "github.com/brnsampson/echopilot/api/echo"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"google.golang.org/grpc"
 	"net/http"

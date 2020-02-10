@@ -1,0 +1,21 @@
+{
+  "services": [
+    {
+      "name": "telegraf_health",
+      "tags": ["internal_health"],
+      "meta": {
+        "health_endpoint": ""
+      },
+      "port": 8090
+    },
+    {
+      "name": "telegraf_metrics",
+      "tags": ["internal_metrics"],
+      "meta": {
+        "metrics_endpoint": "/metrics"
+      },
+      "port": 9273
+    }
+  ]
+}
+

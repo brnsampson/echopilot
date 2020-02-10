@@ -1,0 +1,23 @@
+[Unit]
+Description=consul service
+After=docker.service
+Requires=docker.socket
+
+[Service]
+Type=simple
+ExecStartPre=-/bin/bash -c '/usr/bin/docker kill $(docker ps -q -f name=%p) || true'
+ExecStartPre=-/bin/bash -c '/usr/bin/docker rm $(docker ps -a -q -f name=%p) || true'
+ExecStart=/usr/bin/docker run \
+    --log-driver=journald \
+    --net=host \
+    -v /etc/consul:/consul/config \
+    -v /var/log/consul.log:/var/log/consul.log \
+    --name %p consul agent -dev -client 0.0.0.0 -config-dir /consul/config
+ExecStop=/usr/bin/docker stop %p
+
+Restart=on-success
+#WatchdogSec=30s
+RestartSec=30s
+
+[Install]
+WantedBy=multi-user.target
