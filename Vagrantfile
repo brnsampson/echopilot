@@ -70,6 +70,7 @@ Vagrant.configure("2") do |config|
   # Puppet, Chef, Ansible, Salt, and Docker are also available. Please see the
   # documentation for more information about their specific syntax and use.
   $script = <<-SHELL
+    # First get all updates and 3rd party artifacts (container images)
     cp /home/vagrant
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
     sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
@@ -83,13 +84,19 @@ Vagrant.configure("2") do |config|
     sudo docker pull influxdb
     sudo docker pull netdata/netdata:v1.19.0
     sudo docker pull tecnativa/docker-socket-proxy
+
+    # Install golang
     wget https://dl.google.com/go/go1.13.linux-amd64.tar.gz
     sudo tar -C /usr/local -xzf go1.13.linux-amd64.tar.gz
     mkdir /home/vagrant/go
     sudo chown vagrant:vagrant /home/vagrant/go
-    echo 'PATH=$PATH:/usr/local/go/bin:/home/vagrant/go/bin' >> /home/vagrant/.bashrc
+    echo 'PATH=$PATH:/usr/local/go/bin:/home/vagrant/go/bin' >> ~/.bashrc
+    echo 'GOPATH=~/go' >> ~/.bashrc
     PATH=$PATH:/usr/local/go/bin:/home/vagrant/go/bin
+
+    # Fetch the sd-notify proxy and install into path
     go get github.com/coreos/sdnotify-proxy && sudo cp ~/go/bin/sdnotify-proxy /usr/local/bin/
+
     # Install protobuf and grpc
     go get -u google.golang.org/grpc
     sudo apt install unzip
@@ -100,14 +107,25 @@ Vagrant.configure("2") do |config|
     go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
     go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger
     go get -u github.com/golang/protobuf/protoc-gen-go
-    # Get the actual project code
-    go get -u github.com/spf13/cobra/cobra
-    go get -u github.com/brnsampson/echopilot
+
+    # Install elm
     curl -L -o elm.gz https://github.com/elm/compiler/releases/download/0.19.1/binary-for-linux-64-bit.gz
     gunzip elm.gz
     chmod +x elm
     sudo mv elm /usr/local/bin/
+
+    # Get the actual project code and build the container
+    go get -u github.com/spf13/cobra/cobra
+    go get -u github.com/brnsampson/echopilot
+    mkdir -p /etc/echopilot
     ln -s /home/vagrant/go/src/github.com/brnsampson/echopilot /home/vagrant/echopilot
+
+    # Create self-signed certs for this development server and add them to trusted certs
+    openssl req -x509 -newkey rsa:4096 -nodes -subj "/C=US/ST=California/L=Who knows/O=Shady Interprises/OU=self signers/CN=www.example.com" -sha256 -keyout /etc/echopilot/key.pem -out /etc/echopilot/cert.pem -days 365
+    cp /etc/echopilot/cert.pem /usr/local/share/ca-certificates/
+    update-ca-certificates
+
+    # Make convenience link and set up service/config files for all side-cars
     sudo docker build -t echopilot /home/vagrant/go/src/github.com/brnsampson/echopilot/
     sudo cp echopilot/systemd/echopilot.service /etc/systemd/system/
     sudo cp echopilot/systemd/consul.service /etc/systemd/system/
@@ -120,13 +138,13 @@ Vagrant.configure("2") do |config|
     sudo cp echopilot/etc/telegraf.conf /etc/telegraf/
     sudo mkdir -p /etc/fluent-bit
     sudo cp echopilot/etc/fluent-bit.conf /etc/fluent-bit/
-    git clone https://github.com/fatih/vim-go.git ~/.vim/pack/plugins/start/vim-go
-    echo 'PATH=$PATH:/usr/local/go/bin:/home/vagrant/go/bin' >> ~/.bashrc
-    echo 'GOPATH=~/go' >> ~/.bashrc
 
-    # Now we will set up npm 
-    wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.0/install.sh | bash
-    nvm install node
+    # Any development environment setup
+    git clone https://github.com/fatih/vim-go.git ~/.vim/pack/plugins/start/vim-go
+
+    # Now we will set up npm (currently not used)
+    # wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.0/install.sh | bash
+    # nvm install node
   SHELL
 
   config.vm.provision "shell",
