@@ -2,8 +2,8 @@ package echoserver
 
 import (
 	"context"
+	pb "github.com/brnsampson/echopilot/api/echo"
 	"github.com/brnsampson/echopilot/pkg/echo"
-	pb "github.com/brnsampson/echopilot/proto/echo"
 	"google.golang.org/grpc"
 	"time"
 )

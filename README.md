@@ -33,7 +33,7 @@ run tests with
 
 # Building
 First build the protobuf definition, rest gateway, and swagger doc
- protoc -I/usr/local/include -I. -I$GOPATH/src -I$GOPATH/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis --swagger_out=logtostderr=true:. --grpc-gateway_out=logtostderr=true:$GOPATH/src --go_out=plugins=grpc:$GOPATH/src proto/echo/echo.proto; cp proto/echo/echo.swagger.json ./dist/swagger.json
+ protoc -I/usr/local/include -I. -I$GOPATH/src -I$GOPATH/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis --swagger_out=logtostderr=true:. --grpc-gateway_out=logtostderr=true:$GOPATH/src --go_out=plugins=grpc:$GOPATH/src api/echo/echo.proto; cp api/echo/echo.swagger.json ./dist/swagger.json
 
 build and install with
 `go install github.com/brnsampson/echopilot`
@@ -60,6 +60,7 @@ This is actually really simple. Elm just compiles down to either a single .js or
 general go patterns:
 - https://github.com/thockin/go-build-template
 - https://medium.com/statuscode/how-i-write-go-http-services-after-seven-years-37c208122831
+- https://github.com/golang-standards/project-layout 
 
 testing:
 - https://blog.alexellis.io/golang-writing-unit-tests/

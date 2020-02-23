@@ -3,7 +3,7 @@ package echoclient
 import (
 	"context"
 	"fmt"
-	pb "github.com/brnsampson/echopilot/proto/echo"
+	pb "github.com/brnsampson/echopilot/api/echo"
 	"google.golang.org/grpc"
 	"os"
 	"time"
