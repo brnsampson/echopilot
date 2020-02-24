@@ -34,7 +34,12 @@ RUN chmod +x /bin/containerpilot
 COPY --from=0 /go/bin/echopilot /usr/local/bin/echopilot
 RUN chmod +x /usr/local/bin/echopilot
 
-ENV ECHO_ADDR="0.0.0.0:8080"
+ENV ECHO_SERVER_CERT="/home/vagrant/cert.pem"
+ENV ECHO_SERVER_KEY="/home/vagrant/key.pem"
+ENV ECHO_GATEWAY_SKIP_VERIFY="false"
+ENV ECHO_GRPC_ADDR="127.0.0.1:8080"
+ENV ECHO_REST_ADDR="127.0.0.1:3000"
+ENV ECHO_CLIENT_SKIP_VERIFY="true"
 
 ENTRYPOINT []
 

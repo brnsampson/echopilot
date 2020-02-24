@@ -20,6 +20,7 @@ import (
 
 	"github.com/brnsampson/echopilot/pkg/echoclient"
 	"github.com/spf13/cobra"
+	"strings"
 )
 
 // clientCmd represents the client command
@@ -37,7 +38,13 @@ to quickly create a Cobra application.`,
 
 func runClient(cmd *cobra.Command, args []string) {
 	fmt.Println("client called")
-	echoclient.GetEcho()
+
+	result, err := echoclient.GetEcho(strings.Join(args, " "))
+	if err != nil {
+		fmt.Printf("Error while invoking client: %v", err)
+	}
+
+	fmt.Println(result)
 }
 
 func init() {
