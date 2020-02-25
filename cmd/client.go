@@ -59,4 +59,6 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// clientCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	clientCmd.Flags().String("grpcAddress", "127.0.0.1:8080", "Address of the GRPC server")
+	clientCmd.Flags().Bool("tlsSkipVerify", false, "Skip TLS verification when connecting to GRPC server. Useful when running server with self signed certs.")
 }
