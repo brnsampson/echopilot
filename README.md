@@ -29,7 +29,7 @@ Some things that would be nice for the future:
 
 # Testing
 run tests with
-`go test github.com/brnsampson/echopilot/pkg/echoserver`
+`go test github.com/brnsampson/echopilot/internal/echoserver`
 
 # Building
 First build the protobuf definition, rest gateway, and swagger doc

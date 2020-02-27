@@ -1,9 +1,8 @@
-package echoserver
+package server
 
 import (
 	"context"
-	gw "github.com/brnsampson/echopilot/api/echo"
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	domainserver "github.com/brnsampson/echopilot/internal/echoserver"
 	"google.golang.org/grpc"
 	"net/http"
 )
@@ -31,8 +30,7 @@ func errorHandler(w http.ResponseWriter, r *http.Request, status int) {
 }
 
 func NewGatewayMux(ctx context.Context, grpcAddr string, opts []grpc.DialOption) (http.Handler, error) {
-	rmux := runtime.NewServeMux()
-	err := gw.RegisterEchoHandlerFromEndpoint(ctx, rmux, grpcAddr, opts)
+	rmux, err := domainserver.NewRuntimeMux(ctx, grpcAddr, opts)
 	if err != nil {
 		return nil, err
 	}

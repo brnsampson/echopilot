@@ -1,7 +1,10 @@
-package echoserver
+package server
 
 import (
 	"context"
+	domainserver "github.com/brnsampson/echopilot/internal/echoserver"
+	"github.com/brnsampson/echopilot/pkg/logger"
+	"github.com/spf13/pflag"
 	"google.golang.org/grpc"
 	"net"
 	"net/http"
@@ -12,23 +15,22 @@ import (
 	"time"
 )
 
-// This interface can and will probably need to be modified if you don't want to use the uber zap logger.
-type Logger interface {
-	Debug(...interface{})
-	Debugf(string, ...interface{})
-	Info(...interface{})
-	Infof(string, ...interface{})
-	Error(...interface{})
-	Errorf(string, ...interface{})
-	Sync() error
+// Common server implementation boilerplate
+type grpcRegistrant interface {
+	RegisterWithServer(*grpc.Server) error
 }
 
-// Section 2: common server implementation boilerplate
+type serverOptions interface {
+	GetGrpcAddr() string
+	GetRestAddr() string
+	GetSrvOpts() []grpc.ServerOption
+	GetDialOpts() []grpc.DialOption
+}
+
 type server struct {
-	logger     Logger
-	grpcServer *grpc.Server
-	s_opts     []grpc.ServerOption
-	d_opts     []grpc.DialOption
+	logger     logger.Logger
+	flags      *pflag.FlagSet
+	registrant grpcRegistrant
 	wg         sync.WaitGroup
 	err        chan error
 	done       chan struct{}
@@ -39,44 +41,49 @@ type server struct {
 
 func (s *server) ServeWithReload() {
 	for {
-		grpc_addr := os.Getenv("ECHO_GRPC_ADDR")
-		if grpc_addr == "" {
-			grpc_addr = "127.0.0.1:8080"
+		var sopts serverOptions
+		sopts, e := domainserver.NewServerOpts(s.logger, s.flags)
+
+		if e != nil {
+			s.err <- e
 		}
 
-		http_addr := os.Getenv("ECHO_HTTP_ADDR")
-		if http_addr == "" {
-			http_addr = "127.0.0.1:3000"
+		grpcServer := grpc.NewServer(sopts.GetSrvOpts()...)
+		e = s.registrant.RegisterWithServer(grpcServer)
+
+		if e != nil {
+			s.err <- e
 		}
 
-		grpc_listener, e := net.Listen("tcp", grpc_addr)
+		grpcListener, e := net.Listen("tcp", sopts.GetGrpcAddr())
 		if e != nil {
 			s.err <- e
 		}
 
 		ctx, cancel := context.WithCancel(context.Background())
-		gm, e := NewGatewayMux(ctx, grpc_addr, s.d_opts)
+		gm, e := NewGatewayMux(ctx, sopts.GetGrpcAddr(), sopts.GetDialOpts())
 		if e != nil {
 			s.err <- e
 		}
-		http_serv := &http.Server{Addr: http_addr, Handler: gm}
 
-		// Start http server for swagger and grpc rest gateway
-		go func(err chan<- error) {
-			s.logger.Infof("Rest gateway listening on %s", http_addr)
-			defer cancel()
-			if e := http_serv.ListenAndServe(); e != nil && e != http.ErrServerClosed {
-				err <- e
-			}
-		}(s.err)
+		httpServ := &http.Server{Addr: sopts.GetRestAddr(), Handler: gm}
 
 		// Start GRPC server
 		go func(err chan<- error) {
-			s.logger.Infof("GRPC server listening on %s", grpc_addr)
-			if e := s.grpcServer.Serve(grpc_listener); e != nil {
+			s.logger.Infof("GRPC server listening on %s", sopts.GetGrpcAddr())
+			if e := grpcServer.Serve(grpcListener); e != nil {
 				err <- e
 			}
 			return
+		}(s.err)
+
+		// Start http server for swagger and grpc rest gateway
+		go func(err chan<- error) {
+			s.logger.Infof("Rest gateway listening on %s", sopts.GetRestAddr())
+			defer cancel()
+			if e := httpServ.ListenAndServe(); e != nil && e != http.ErrServerClosed {
+				err <- e
+			}
 		}(s.err)
 
 		select {
@@ -85,7 +92,7 @@ func (s *server) ServeWithReload() {
 			begin := time.Now()
 			s.logger.Debug("Halting HTTP Server...")
 			ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-			if err := http_serv.Shutdown(ctx); err != nil {
+			if err := httpServ.Shutdown(ctx); err != nil {
 				s.logger.Debugf("Failed to gracefully shutdown server: %v", err)
 			} else {
 				s.logger.Debugf("HTTP server halted in %v", time.Since(begin))
@@ -93,14 +100,14 @@ func (s *server) ServeWithReload() {
 
 			s.logger.Debug("Halting GRPC Server...")
 			begin = time.Now()
-			s.grpcServer.GracefulStop()
+			grpcServer.GracefulStop()
 			s.logger.Debugf("GRPC server halted in %v", time.Since(begin))
 		case <-s.done:
 			s.logger.Info("Server shutting down...")
 			begin := time.Now()
 			s.logger.Debug("Halting HTTP Server...")
 			ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-			if err := http_serv.Shutdown(ctx); err != nil {
+			if err := httpServ.Shutdown(ctx); err != nil {
 				s.logger.Debugf("Failed to gracefully shutdown HTTP server: %v", err)
 			} else {
 				s.logger.Debugf("HTTP server halted in %v", time.Since(begin))
@@ -108,7 +115,7 @@ func (s *server) ServeWithReload() {
 
 			s.logger.Debug("Halting GRPC Server...")
 			begin = time.Now()
-			s.grpcServer.GracefulStop()
+			grpcServer.GracefulStop()
 			s.logger.Debugf("GRPC server halted in %v", time.Since(begin))
 			s.wg.Done()
 			return
@@ -157,7 +164,7 @@ func (s *server) Shutdown() {
 	return
 }
 
-func NewServer(logger Logger) *server {
+func NewServer(logger logger.Logger, flags *pflag.FlagSet) *server {
 	// First set up signal hanlding so that we can reload and stop.
 	hups := make(chan os.Signal, 1)
 	stop := make(chan os.Signal, 1)
@@ -170,13 +177,14 @@ func NewServer(logger Logger) *server {
 	done := make(chan struct{}, 1)
 	err := make(chan error, 1)
 
-	var srv_opts []grpc.ServerOption
-	gs := newGrpcServer(logger, srv_opts)
+	registrant, e := domainserver.NewServerRegistrant(logger)
 
-	var dial_opts []grpc.DialOption
-	dial_opts = append(dial_opts, grpc.WithInsecure())
+	if e != nil {
+		logger.Error("Error: failed to create GRPC server registrant with call to NewServerRegistrant()")
+		err <- e
+	}
 
 	// If exitCode is -1 then execution has not completed yet.
-	server := &server{logger, gs, srv_opts, dial_opts, waitgroup, err, done, stop, hups, -1}
+	server := &server{logger, flags, registrant, waitgroup, err, done, stop, hups, -1}
 	return server
 }

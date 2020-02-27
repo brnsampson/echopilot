@@ -107,6 +107,7 @@ Vagrant.configure("2") do |config|
     go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
     go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger
     go get -u github.com/golang/protobuf/protoc-gen-go
+    go get -u github.com/caarlos0/env
 
     # Install elm
     curl -L -o elm.gz https://github.com/elm/compiler/releases/download/0.19.1/binary-for-linux-64-bit.gz

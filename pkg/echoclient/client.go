@@ -2,39 +2,62 @@ package echoclient
 
 import (
 	"context"
-	"fmt"
+	"crypto/tls"
 	pb "github.com/brnsampson/echopilot/api/echo"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"os"
+	"strconv"
 	"time"
 )
 
-func EchoString(client pb.EchoClient, req *pb.EchoRequest) {
+func EchoString(client pb.EchoClient, req *pb.EchoRequest) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	response, err := client.Echo(ctx, req)
 	if err != nil {
-		fmt.Printf("%v.Echo(_) = _, %v: ", client, err)
+		return "", err
 	}
-	fmt.Println(response)
+	return response.Content, nil
 }
 
-func GetEcho() {
+func GetEcho(request string) (string, error) {
 	var opts []grpc.DialOption
-	opts = append(opts, grpc.WithInsecure())
 	addr := os.Getenv("ECHO_GRPC_ADDR")
+
 	if addr == "" {
 		addr = "127.0.0.1:8080"
 	}
+
+	var skip bool
+	var err error
+	skipVerify := os.Getenv("ECHO_CLIENT_SKIP_VERIFY")
+	if skipVerify == "" {
+		skip = false
+	} else {
+		skip, err = strconv.ParseBool(skipVerify)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	tlsConf := &tls.Config{InsecureSkipVerify: skip}
+	tlsOpt := credentials.NewTLS(tlsConf)
+	opts = append(opts, grpc.WithTransportCredentials(tlsOpt))
 	conn, err := grpc.Dial(addr, opts...)
+
 	if err != nil {
-		fmt.Println("Error while dialing")
-		fmt.Println(err)
-		os.Exit(1)
+		return "", err
 	}
 
 	defer conn.Close()
 
 	client := pb.NewEchoClient(conn)
-	EchoString(client, &pb.EchoRequest{Content: "tester"})
+	result, err := EchoString(client, &pb.EchoRequest{Content: request})
+
+	if err != nil {
+		return "", err
+	}
+
+	return result, nil
 }

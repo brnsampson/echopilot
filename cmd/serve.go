@@ -20,7 +20,7 @@ import (
 	"os"
 
 	// NOTE: if you fork this repo you will need to change this path.
-	"github.com/brnsampson/echopilot/internal/echoserver"
+	"github.com/brnsampson/echopilot/internal/server"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
@@ -28,14 +28,9 @@ import (
 // serveCmd represents the serve command
 var serveCmd = &cobra.Command{
 	Use:   "serve",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	Run: runServe,
+	Short: "Start the server in the foreground.",
+	Long:  `Start a reloadable GRPC server with REST gateway.`,
+	Run:   runServe,
 }
 
 func runServe(cmd *cobra.Command, args []string) {
@@ -51,7 +46,7 @@ func runServe(cmd *cobra.Command, args []string) {
 	var srv interface {
 		BlockingRun() int
 	}
-	srv = echoserver.NewServer(sugar)
+	srv = server.NewServer(sugar, cmd.Flags())
 	exitCode := srv.BlockingRun()
 	os.Exit(exitCode)
 }
@@ -70,4 +65,10 @@ func init() {
 	// serveCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
 	// NOTE: add any additional flags here.
+	serveCmd.Flags().String("config", "", "Location of a environment config file. All flags can be set via file.")
+	serveCmd.Flags().String("grpcAddress", "127.0.0.1:8080", "Address to bind GRPC server")
+	serveCmd.Flags().String("restAddress", "127.0.0.1:3000", "Address to bind REST gatway for grpc server")
+	serveCmd.Flags().String("tlsCert", "", "Location of server certificate for TLS")
+	serveCmd.Flags().String("tlsKey", "", "Location of server key for TLS")
+	serveCmd.Flags().Bool("tlsSkipVerify", false, "Skip TLS verification between REST proxy and GRPC server. Almost never needed.")
 }
