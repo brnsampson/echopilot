@@ -61,7 +61,7 @@ func (s *server) ServeWithReload() {
 		}
 
 		ctx, cancel := context.WithCancel(context.Background())
-		gm, e := domainserver.NewGatewayMux(ctx, sopts.GetGrpcAddr(), sopts.GetDialOpts())
+		gm, e := NewGatewayMux(ctx, sopts.GetGrpcAddr(), sopts.GetDialOpts())
 		if e != nil {
 			s.err <- e
 		}
