@@ -1,0 +1,21 @@
+{
+  "packages": [
+    "go_1_21@latest",
+    "github:a-h/templ",
+    "buf@latest",
+    "protobuf@latest",
+    "protoc-gen-go@latest",
+    "protoc-gen-go-grpc@latest",
+    "protoc-gen-connect-go@latest"
+  ],
+  "shell": {
+    "init_hook": [
+      "echo 'Welcome to devbox!' > /dev/null"
+    ],
+    "scripts": {
+      "test": [
+        "echo \"Error: no test specified\" && exit 1"
+      ]
+    }
+  }
+}

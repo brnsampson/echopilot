@@ -1,0 +1,23 @@
+package templates
+
+import (
+    "strconv"
+    "github.com/brnsampson/echopilot/features/memory/records"
+)
+
+templ table(memories []*records.Memory) {
+    <ul>
+    for i, m := range memories {
+        <li>
+            <input id={ "memory" + strconv.Itoa(i) } type="hidden" name="content" value={ m.Display() }></input>
+            { m.Display() } <button hx-post="/echo" hx-target="#echo_main" hx-include={ "#memory" + strconv.Itoa(i) }>Load this memory</button>
+        </li>
+    }
+    </ul>
+}
+
+templ Page(memories []*records.Memory) {
+    <div id="memory_main">
+    @table(memories)
+    </div>
+}

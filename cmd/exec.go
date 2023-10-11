@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,10 +20,10 @@ import (
 	"os"
 	"strings"
 
-	//i NOTE: If you are forking this, then change this import to point to your repo.
-	"github.com/brnsampson/echopilot/pkg/echo"
+	// i NOTE: If you are forking this, then change this import to point to your repo.
+	"github.com/brnsampson/echopilot/rpc/echo"
 	"github.com/spf13/cobra"
-	"go.uber.org/zap"
+    "github.com/charmbracelet/log"
 )
 
 // execCmd represents the exec command
@@ -37,19 +37,21 @@ which exposes the same functionality over REST or RPC interface.  `,
 }
 
 func runExec(cmd *cobra.Command, args []string) {
-	logger, err := zap.NewDevelopment()
-	if err != nil {
-		fmt.Println("Failed to initialize logger!")
-		os.Exit(1)
-	}
-	sugar := logger.Sugar()
-	defer sugar.Sync()
+    logger := log.NewWithOptions(os.Stderr, log.Options{
+        ReportCaller: true,
+        ReportTimestamp: true,
+        Prefix: "echopilot",
+        Level: log.DebugLevel,
+    })
 
 	// NOTE: To change the command being run, change the following:
 	value := strings.Join(args, " ")
-	result, err := echo.EchoString(value)
+
+	service := echo.NewService(logger)
+    request := echo.NewStringRequest(value)
+	result, err := service.EchoString(request)
 	if err != nil {
-		sugar.Errorf("Error in Echo: %v", err)
+		logger.Error("Echo failed", "error", err)
 	}
 	fmt.Println(result)
 	os.Exit(0)

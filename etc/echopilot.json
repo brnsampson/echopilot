@@ -1,0 +1,8 @@
+{
+  "serverHost": "localhost",
+  "serverPort": 1443,
+  "tlsCert": "./etc/tls/cert.pem",
+  "tlsKey": "./etc/tls/key.pem",
+  "tlsEnabled": true,
+  "tlsSkipVerify": true
+}

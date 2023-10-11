@@ -1,0 +1,27 @@
+[Unit]
+Description=echopilot service
+After=docker.service
+Requires=docker.socket
+
+[Service]
+Type=notify
+ExecStartPre=-/bin/bash -c '/usr/bin/docker kill $(docker ps -q -f name=%p) || true'
+ExecStartPre=-/bin/bash -c '/usr/bin/docker rm $(docker ps -a -q -f name=%p) || true'
+ExecStart=/usr/local/bin/sdnotify-proxy /run/%p.sock /usr/bin/docker run \
+    --log-driver=journald \
+    -v /run/%p.sock:/run/%p.sock \
+    -e SYSTEMD_NOTIFY_ENABLE=true \
+    -e NOTIFY_SOCKET=/run/%p.sock \
+    -e WATCHDOG_USEC=1000000 \
+    -e ECHO_ADDR=0.0.0.0:3000 \
+    -p 3000:3000 \
+    --name %p echopilot
+ExecStop=/usr/bin/docker stop %p
+
+Restart=on-success
+#WatchdogSec=30s
+RestartSec=30s
+NotifyAccess=all
+
+[Install]
+WantedBy=multi-user.target

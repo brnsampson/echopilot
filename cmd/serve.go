@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,13 +16,11 @@ limitations under the License.
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	// NOTE: if you fork this repo you will need to change this path.
-	"github.com/brnsampson/echopilot/internal/server"
+	"github.com/brnsampson/echopilot/internal/appserver"
 	"github.com/spf13/cobra"
-	"go.uber.org/zap"
 )
 
 // serveCmd represents the serve command
@@ -34,19 +32,15 @@ var serveCmd = &cobra.Command{
 }
 
 func runServe(cmd *cobra.Command, args []string) {
-	logger, err := zap.NewDevelopment()
-	if err != nil {
-		fmt.Println("Failed to initialize logger!")
-		os.Exit(1)
-	}
-	sugar := logger.Sugar()
-	defer sugar.Sync()
-
 	// NOTE: to chenge the behavior of this function change the remainder of this function.
 	var srv interface {
 		BlockingRun() int
 	}
-	srv = server.NewServer(sugar, cmd.Flags())
+
+    srv, err := appserver.NewAppServer(cmd.Flags())
+    if err != nil {
+        os.Exit(1)
+    }
 	exitCode := srv.BlockingRun()
 	os.Exit(exitCode)
 }
@@ -66,9 +60,11 @@ func init() {
 
 	// NOTE: add any additional flags here.
 	serveCmd.Flags().String("config", "", "Location of a environment config file. All flags can be set via file.")
-	serveCmd.Flags().String("grpcAddress", "127.0.0.1:8080", "Address to bind GRPC server")
-	serveCmd.Flags().String("restAddress", "127.0.0.1:3000", "Address to bind REST gatway for grpc server")
+	serveCmd.Flags().String("host", "localhost", "Address to bind GRPC server")
+	serveCmd.Flags().String("ip", "127.0.0.1", "Address to bind REST gateway for grpc server")
+	serveCmd.Flags().Int("port", 3000, "Address to bind REST gateway for grpc server")
 	serveCmd.Flags().String("tlsCert", "", "Location of server certificate for TLS")
 	serveCmd.Flags().String("tlsKey", "", "Location of server key for TLS")
+	serveCmd.Flags().Bool("tlsEnabled", true, "Enable tls")
 	serveCmd.Flags().Bool("tlsSkipVerify", false, "Skip TLS verification between REST proxy and GRPC server. Almost never needed.")
 }

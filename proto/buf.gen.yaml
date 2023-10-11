@@ -1,0 +1,26 @@
+version: v1
+managed:
+  enabled: true
+  go_package_prefix:
+    default: github.com/brnsampson/echopilot/proto/gen
+    except:
+      - buf.build/googleapis/googleapis
+plugins:
+  - plugin: go
+    out: proto/gen
+    opt:
+      - paths=source_relative
+      #  - plugin: go-grpc
+      #    out: api/gen/go
+      #    opt:
+      #      - paths=source_relative
+      #  - plugin: grpc-gateway
+      #    out: api/gen/go
+      #    opt:
+      #      - paths=source_relative
+      #  - plugin: openapiv2
+      #    out: api/gen
+  - plugin: connect-go
+    out: proto/gen
+    opt:
+      - paths=source_relative

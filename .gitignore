@@ -1,3 +1,6 @@
+# protobuf and buf stuff
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -103,3 +106,6 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# testing certs
+configs/ssl
