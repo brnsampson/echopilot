@@ -1,6 +1,26 @@
 {
   "lockfile_version": "1",
   "packages": {
+    "air@latest": {
+      "last_modified": "2023-11-17T14:14:56Z",
+      "resolved": "github:NixOS/nixpkgs/a71323f68d4377d12c04a5410e214495ec598d4c#air",
+      "source": "devbox-search",
+      "version": "1.49.0",
+      "systems": {
+        "aarch64-darwin": {
+          "store_path": "/nix/store/4x0s74qxrgh2d6vxiq48bwvfiq2z4klb-air-1.49.0"
+        },
+        "aarch64-linux": {
+          "store_path": "/nix/store/bvgzrnqlvf4h8m8hf4yvv0sjzanxnkfh-air-1.49.0"
+        },
+        "x86_64-darwin": {
+          "store_path": "/nix/store/awv6z535hfzqvrnwblhngqhr3hnnzdfw-air-1.49.0"
+        },
+        "x86_64-linux": {
+          "store_path": "/nix/store/45hbispx662adq37lswb0r10vzp9csqi-air-1.49.0"
+        }
+      }
+    },
     "buf@latest": {
       "last_modified": "2023-09-27T18:02:17Z",
       "resolved": "github:NixOS/nixpkgs/517501bcf14ae6ec47efd6a17dda0ca8e6d866f9#buf",
@@ -12,6 +32,26 @@
       "resolved": "github:NixOS/nixpkgs/46688f8eb5cd6f1298d873d4d2b9cf245e09e88e#go_1_21",
       "source": "devbox-search",
       "version": "1.21.1"
+    },
+    "gotools@latest": {
+      "last_modified": "2023-11-17T14:14:56Z",
+      "resolved": "github:NixOS/nixpkgs/a71323f68d4377d12c04a5410e214495ec598d4c#gotools",
+      "source": "devbox-search",
+      "version": "0.7.0",
+      "systems": {
+        "aarch64-darwin": {
+          "store_path": "/nix/store/bmdv3y11inhn36scpf2b8k0vycafga7f-gotools-0.7.0"
+        },
+        "aarch64-linux": {
+          "store_path": "/nix/store/ng5x0ylvglivpcq6vqmncfm78xynn1d8-gotools-0.7.0"
+        },
+        "x86_64-darwin": {
+          "store_path": "/nix/store/rsgdk2jb989h86y8rnc2qczc2y31xjgl-gotools-0.7.0"
+        },
+        "x86_64-linux": {
+          "store_path": "/nix/store/iizivm6g48688vc2ayc7v1bqh0lrp3jb-gotools-0.7.0"
+        }
+      }
     },
     "protobuf@latest": {
       "last_modified": "2023-09-27T18:02:17Z",

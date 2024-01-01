@@ -6,7 +6,9 @@
     "protobuf@latest",
     "protoc-gen-go@latest",
     "protoc-gen-go-grpc@latest",
-    "protoc-gen-connect-go@latest"
+    "protoc-gen-connect-go@latest",
+    "air@latest",
+    "gotools@latest"
   ],
   "shell": {
     "init_hook": [
